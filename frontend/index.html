@@ -315,6 +315,8 @@
             LIFF を初期化していません。
           </div>
 
+          <div id="debugInfo" class="status" data-tone="default" hidden></div>
+
           <p class="hint">
             GitHub Pages 側ではこの入力値を localStorage に保持します。Share
             Target Picker は LINE アプリ内ブラウザで開いたときのみ利用できます。
@@ -351,6 +353,7 @@
       };
 
       const statusElement = document.getElementById("status");
+      const debugInfoElement = document.getElementById("debugInfo");
       const liffIdInput = document.getElementById("liffId");
       const apiBaseUrlInput = document.getElementById("apiBaseUrl");
       const brushColorInput = document.getElementById("brushColor");
@@ -365,6 +368,19 @@
       function setStatus(message, tone = "default") {
         statusElement.textContent = message;
         statusElement.dataset.tone = tone;
+      }
+
+      function setDebugInfo(message, tone = "default") {
+        if (!message) {
+          debugInfoElement.hidden = true;
+          debugInfoElement.textContent = "";
+          debugInfoElement.dataset.tone = "default";
+          return;
+        }
+
+        debugInfoElement.hidden = false;
+        debugInfoElement.textContent = message;
+        debugInfoElement.dataset.tone = tone;
       }
 
       function saveConfig() {
@@ -526,11 +542,13 @@
         }
 
         shareButton.disabled = true;
+        setDebugInfo("");
 
         try {
           setStatus("画像をアップロードしています...");
           const exportDataUrl = buildExportDataUrl();
           const { imageUrl } = await uploadImage(exportDataUrl);
+          setDebugInfo("アップロード済み画像 URL: " + imageUrl);
 
           setStatus("Share Target Picker を開いています...");
           const result = await liff.shareTargetPicker([
@@ -541,14 +559,27 @@
             },
           ]);
 
-          if (result) {
-            setStatus("画像を送信しました。", "success");
-          } else {
+          if (result === null) {
             setStatus("Share Target Picker が閉じられました。", "default");
+            setDebugInfo("送信はキャンセルされました。画像 URL: " + imageUrl, "default");
+          } else {
+            setStatus("画像を送信しました。", "success");
+            setDebugInfo(
+              "shareTargetPicker は解決されました。画像 URL: " +
+                imageUrl +
+                (result && result.status ? " / status: " + result.status : ""),
+              "success",
+            );
           }
         } catch (error) {
           console.error(error);
           setStatus(error.message || "共有処理に失敗しました。", "error");
+          setDebugInfo(
+            "詳細: " +
+              (error && error.code ? error.code + " / " : "") +
+              (error && error.message ? error.message : String(error)),
+            "error",
+          );
         } finally {
           shareButton.disabled = false;
         }

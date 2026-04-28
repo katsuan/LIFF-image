@@ -13,6 +13,15 @@ const maxImageBytes = 5 * 1024 * 1024;
 
 app.set("trust proxy", true);
 
+app.use((request, _response, next) => {
+  console.log(
+    `[${new Date().toISOString()}] ${request.method} ${request.originalUrl} origin=${
+      request.get("origin") || "-"
+    } ua=${request.get("user-agent") || "-"}`,
+  );
+  next();
+});
+
 app.use(
   cors({
     origin(origin, callback) {
