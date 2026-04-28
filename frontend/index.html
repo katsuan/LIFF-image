@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LIFF Draw Send</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <style>
+      :root {
+        --bg: #f4efe4;
+        --panel: rgba(255, 251, 244, 0.9);
+        --ink: #18222f;
+        --accent: #ed6a3a;
+        --accent-strong: #cf4b1f;
+        --accent-soft: #ffcf99;
+        --line: rgba(24, 34, 47, 0.12);
+        --success: #1c7c54;
+        --error: #b42318;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "Zen Kaku Gothic New", sans-serif;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at top left, rgba(255, 207, 153, 0.8), transparent 34%),
+          radial-gradient(circle at bottom right, rgba(237, 106, 58, 0.18), transparent 28%),
+          linear-gradient(135deg, #f9f4ea 0%, #efe5d2 100%);
+      }
+
+      .shell {
+        width: min(1120px, calc(100% - 32px));
+        margin: 0 auto;
+        padding: 24px 0 40px;
+      }
+
+      .hero {
+        padding: 28px;
+        border: 1px solid var(--line);
+        border-radius: 28px;
+        background:
+          linear-gradient(135deg, rgba(255, 255, 255, 0.78), rgba(255, 248, 238, 0.9)),
+          repeating-linear-gradient(
+            -45deg,
+            transparent,
+            transparent 10px,
+            rgba(24, 34, 47, 0.03) 10px,
+            rgba(24, 34, 47, 0.03) 20px
+          );
+        box-shadow: 0 20px 50px rgba(90, 63, 34, 0.12);
+      }
+
+      .hero h1 {
+        margin: 0 0 10px;
+        font-family: "Space Grotesk", sans-serif;
+        font-size: clamp(2rem, 4vw, 3.4rem);
+        line-height: 0.95;
+        letter-spacing: -0.04em;
+      }
+
+      .hero p {
+        margin: 0;
+        max-width: 720px;
+        line-height: 1.7;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: 340px minmax(0, 1fr);
+        gap: 20px;
+        margin-top: 20px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 24px;
+        background: var(--panel);
+        backdrop-filter: blur(12px);
+        box-shadow: 0 16px 32px rgba(90, 63, 34, 0.08);
+      }
+
+      .config {
+        padding: 22px;
+      }
+
+      .config h2,
+      .board h2 {
+        margin: 0 0 16px;
+        font-family: "Space Grotesk", sans-serif;
+        font-size: 1.1rem;
+        letter-spacing: -0.03em;
+      }
+
+      .field {
+        margin-bottom: 14px;
+      }
+
+      .field label {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 0.9rem;
+        font-weight: 700;
+      }
+
+      .field input,
+      .field select {
+        width: 100%;
+        padding: 12px 14px;
+        border: 1px solid rgba(24, 34, 47, 0.14);
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.85);
+        font: inherit;
+        color: inherit;
+      }
+
+      .toolbar {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin: 18px 0;
+      }
+
+      .toolbar .field {
+        margin: 0;
+      }
+
+      .actions {
+        display: grid;
+        gap: 10px;
+      }
+
+      button {
+        border: 0;
+        border-radius: 999px;
+        padding: 13px 18px;
+        font: 700 0.96rem/1 "Space Grotesk", sans-serif;
+        cursor: pointer;
+        transition: transform 140ms ease, box-shadow 140ms ease, opacity 140ms ease;
+      }
+
+      button:hover:not(:disabled) {
+        transform: translateY(-1px);
+      }
+
+      button:disabled {
+        opacity: 0.55;
+        cursor: wait;
+      }
+
+      .primary {
+        color: white;
+        background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+        box-shadow: 0 10px 24px rgba(207, 75, 31, 0.28);
+      }
+
+      .secondary {
+        color: var(--ink);
+        background: rgba(255, 255, 255, 0.75);
+        border: 1px solid rgba(24, 34, 47, 0.08);
+      }
+
+      .ghost {
+        color: var(--ink);
+        background: rgba(255, 207, 153, 0.35);
+      }
+
+      .status {
+        margin-top: 16px;
+        padding: 12px 14px;
+        border-radius: 16px;
+        line-height: 1.5;
+        background: rgba(255, 255, 255, 0.72);
+        border: 1px solid rgba(24, 34, 47, 0.08);
+      }
+
+      .status[data-tone="success"] {
+        color: var(--success);
+      }
+
+      .status[data-tone="error"] {
+        color: var(--error);
+      }
+
+      .hint {
+        margin-top: 12px;
+        font-size: 0.88rem;
+        line-height: 1.6;
+        color: rgba(24, 34, 47, 0.72);
+      }
+
+      .board {
+        padding: 18px;
+      }
+
+      .board-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 14px;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: rgba(255, 207, 153, 0.42);
+        font-size: 0.88rem;
+        font-weight: 700;
+      }
+
+      .badge::before {
+        content: "";
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: var(--accent);
+      }
+
+      .canvas-frame {
+        position: relative;
+        padding: 14px;
+        border-radius: 26px;
+        background:
+          linear-gradient(180deg, rgba(24, 34, 47, 0.05), rgba(24, 34, 47, 0.02)),
+          white;
+        border: 1px solid rgba(24, 34, 47, 0.08);
+      }
+
+      canvas {
+        display: block;
+        width: 100%;
+        aspect-ratio: 1 / 1;
+        border-radius: 18px;
+        background: white;
+        touch-action: none;
+        box-shadow: inset 0 0 0 1px rgba(24, 34, 47, 0.08);
+      }
+
+      .board-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      @media (max-width: 900px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <section class="hero">
+        <h1>Draw. Upload. Share.</h1>
+        <p>
+          LINE LIFF 上でキャンバスに描いた画像を PNG に変換し、Render
+          側で公開 URL を発行して Share Target Picker から送信します。
+        </p>
+      </section>
+
+      <section class="grid">
+        <aside class="panel config">
+          <h2>Config</h2>
+
+          <div class="field">
+            <label for="liffId">LIFF ID</label>
+            <input id="liffId" type="text" placeholder="例: 2000000000-xxxxxxxx" />
+          </div>
+
+          <div class="field">
+            <label for="apiBaseUrl">Render API Base URL</label>
+            <input id="apiBaseUrl" type="url" placeholder="https://your-app.onrender.com" />
+          </div>
+
+          <div class="toolbar">
+            <div class="field">
+              <label for="brushColor">Brush Color</label>
+              <input id="brushColor" type="color" value="#18222f" />
+            </div>
+
+            <div class="field">
+              <label for="brushSize">Brush Size</label>
+              <select id="brushSize">
+                <option value="4">4 px</option>
+                <option value="8" selected>8 px</option>
+                <option value="12">12 px</option>
+                <option value="18">18 px</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="actions">
+            <button id="saveConfigButton" class="secondary" type="button">Save Config</button>
+            <button id="initLiffButton" class="ghost" type="button">Initialize LIFF</button>
+            <button id="shareButton" class="primary" type="button">Share Image</button>
+          </div>
+
+          <div id="status" class="status" data-tone="default">
+            LIFF を初期化していません。
+          </div>
+
+          <p class="hint">
+            GitHub Pages 側ではこの入力値を localStorage に保持します。Share
+            Target Picker は LINE アプリ内ブラウザで開いたときのみ利用できます。
+          </p>
+        </aside>
+
+        <section class="panel board">
+          <div class="board-header">
+            <h2>Canvas</h2>
+            <span class="badge">Square PNG Export</span>
+          </div>
+
+          <div class="canvas-frame">
+            <canvas id="drawCanvas" width="1024" height="1024"></canvas>
+          </div>
+
+          <div class="board-actions">
+            <button id="clearButton" class="secondary" type="button">Clear Canvas</button>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <script>
+      const storageKeys = {
+        liffId: "liff-draw-send:liff-id",
+        apiBaseUrl: "liff-draw-send:api-base-url",
+      };
+
+      const state = {
+        liffInitialized: false,
+        drawing: false,
+        lastPoint: null,
+      };
+
+      const statusElement = document.getElementById("status");
+      const liffIdInput = document.getElementById("liffId");
+      const apiBaseUrlInput = document.getElementById("apiBaseUrl");
+      const brushColorInput = document.getElementById("brushColor");
+      const brushSizeInput = document.getElementById("brushSize");
+      const initLiffButton = document.getElementById("initLiffButton");
+      const saveConfigButton = document.getElementById("saveConfigButton");
+      const shareButton = document.getElementById("shareButton");
+      const clearButton = document.getElementById("clearButton");
+      const canvas = document.getElementById("drawCanvas");
+      const context = canvas.getContext("2d");
+
+      function setStatus(message, tone = "default") {
+        statusElement.textContent = message;
+        statusElement.dataset.tone = tone;
+      }
+
+      function saveConfig() {
+        localStorage.setItem(storageKeys.liffId, liffIdInput.value.trim());
+        localStorage.setItem(storageKeys.apiBaseUrl, apiBaseUrlInput.value.trim());
+        setStatus("設定を保存しました。", "success");
+      }
+
+      function loadConfig() {
+        liffIdInput.value = localStorage.getItem(storageKeys.liffId) || "";
+        apiBaseUrlInput.value = localStorage.getItem(storageKeys.apiBaseUrl) || "";
+      }
+
+      function configureBrush() {
+        context.lineCap = "round";
+        context.lineJoin = "round";
+        context.strokeStyle = brushColorInput.value;
+        context.lineWidth = Number(brushSizeInput.value);
+      }
+
+      function fillCanvasBackground() {
+        context.save();
+        context.fillStyle = "#ffffff";
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        context.restore();
+      }
+
+      function resetCanvas() {
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        fillCanvasBackground();
+        configureBrush();
+      }
+
+      function resizeCanvas() {
+        const snapshot = document.createElement("canvas");
+        snapshot.width = canvas.width;
+        snapshot.height = canvas.height;
+        snapshot.getContext("2d").drawImage(canvas, 0, 0);
+
+        const displaySize = Math.min(window.innerWidth - 64, 820);
+        const nextSize = Math.max(320, displaySize);
+        canvas.width = 1024;
+        canvas.height = 1024;
+        canvas.style.maxWidth = nextSize + "px";
+        canvas.style.maxHeight = nextSize + "px";
+
+        fillCanvasBackground();
+        context.drawImage(snapshot, 0, 0);
+        configureBrush();
+      }
+
+      function getPoint(event) {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+
+        return {
+          x: (event.clientX - rect.left) * scaleX,
+          y: (event.clientY - rect.top) * scaleY,
+        };
+      }
+
+      function handlePointerDown(event) {
+        state.drawing = true;
+        state.lastPoint = getPoint(event);
+      }
+
+      function handlePointerMove(event) {
+        if (!state.drawing || !state.lastPoint) {
+          return;
+        }
+
+        const point = getPoint(event);
+        context.beginPath();
+        context.moveTo(state.lastPoint.x, state.lastPoint.y);
+        context.lineTo(point.x, point.y);
+        context.stroke();
+        state.lastPoint = point;
+      }
+
+      function handlePointerUp() {
+        state.drawing = false;
+        state.lastPoint = null;
+      }
+
+      function buildExportDataUrl() {
+        const exportCanvas = document.createElement("canvas");
+        exportCanvas.width = canvas.width;
+        exportCanvas.height = canvas.height;
+        const exportContext = exportCanvas.getContext("2d");
+        exportContext.fillStyle = "#ffffff";
+        exportContext.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+        exportContext.drawImage(canvas, 0, 0);
+        return exportCanvas.toDataURL("image/png");
+      }
+
+      async function initLiff() {
+        const liffId = liffIdInput.value.trim();
+
+        if (!liffId) {
+          setStatus("LIFF ID を入力してください。", "error");
+          return;
+        }
+
+        if (typeof liff === "undefined") {
+          setStatus("LIFF SDK の読み込みに失敗しました。", "error");
+          return;
+        }
+
+        try {
+          setStatus("LIFF を初期化しています...");
+          await liff.init({ liffId });
+
+          if (!liff.isLoggedIn()) {
+            liff.login();
+            return;
+          }
+
+          if (!liff.isApiAvailable("shareTargetPicker")) {
+            setStatus("この環境では Share Target Picker を利用できません。", "error");
+            return;
+          }
+
+          state.liffInitialized = true;
+          setStatus("LIFF の初期化が完了しました。", "success");
+        } catch (error) {
+          console.error(error);
+          setStatus("LIFF 初期化に失敗しました。LIFF ID を確認してください。", "error");
+        }
+      }
+
+      async function uploadImage(dataUrl) {
+        const apiBaseUrl = apiBaseUrlInput.value.trim().replace(/\/$/, "");
+
+        if (!apiBaseUrl) {
+          throw new Error("Render API Base URL を入力してください。");
+        }
+
+        const response = await fetch(apiBaseUrl + "/api/upload", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ imageData: dataUrl }),
+        });
+
+        if (!response.ok) {
+          const payload = await response.json().catch(() => ({}));
+          throw new Error(payload.error || "画像アップロードに失敗しました。");
+        }
+
+        return response.json();
+      }
+
+      async function shareImage() {
+        if (!state.liffInitialized) {
+          setStatus("先に LIFF を初期化してください。", "error");
+          return;
+        }
+
+        shareButton.disabled = true;
+
+        try {
+          setStatus("画像をアップロードしています...");
+          const exportDataUrl = buildExportDataUrl();
+          const { imageUrl } = await uploadImage(exportDataUrl);
+
+          setStatus("Share Target Picker を開いています...");
+          const result = await liff.shareTargetPicker([
+            {
+              type: "image",
+              originalContentUrl: imageUrl,
+              previewImageUrl: imageUrl,
+            },
+          ]);
+
+          if (result) {
+            setStatus("画像を送信しました。", "success");
+          } else {
+            setStatus("Share Target Picker が閉じられました。", "default");
+          }
+        } catch (error) {
+          console.error(error);
+          setStatus(error.message || "共有処理に失敗しました。", "error");
+        } finally {
+          shareButton.disabled = false;
+        }
+      }
+
+      loadConfig();
+      resizeCanvas();
+      resetCanvas();
+
+      window.addEventListener("resize", resizeCanvas);
+      brushColorInput.addEventListener("change", configureBrush);
+      brushSizeInput.addEventListener("change", configureBrush);
+      saveConfigButton.addEventListener("click", saveConfig);
+      initLiffButton.addEventListener("click", initLiff);
+      shareButton.addEventListener("click", shareImage);
+      clearButton.addEventListener("click", resetCanvas);
+
+      canvas.addEventListener("pointerdown", handlePointerDown);
+      canvas.addEventListener("pointermove", handlePointerMove);
+      canvas.addEventListener("pointerup", handlePointerUp);
+      canvas.addEventListener("pointerleave", handlePointerUp);
+      canvas.addEventListener("pointercancel", handlePointerUp);
+    </script>
+  </body>
+</html>
