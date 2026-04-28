@@ -22,6 +22,7 @@
         --line: rgba(24, 34, 47, 0.12);
         --success: #1c7c54;
         --error: #b42318;
+        --tool-height: 44px;
       }
 
       * {
@@ -85,17 +86,21 @@
         margin-bottom: 14px;
       }
 
+      .field.is-disabled {
+        opacity: 0.38;
+      }
+
       .field label {
         display: block;
-        margin-bottom: 6px;
-        font-size: 0.9rem;
+        margin-bottom: 4px;
+        font-size: 0.78rem;
         font-weight: 700;
       }
 
       .field input,
       .field select {
         width: 100%;
-        padding: 12px 14px;
+        padding: 8px 12px;
         border: 1px solid rgba(24, 34, 47, 0.14);
         border-radius: 14px;
         background: rgba(255, 255, 255, 0.85);
@@ -110,27 +115,11 @@
 
       .quick-tools {
         display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 12px;
-        align-items: end;
-      }
-
-      .tool-cluster {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) 140px;
-        gap: 12px;
-      }
-
-      .background-tools {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr);
-        gap: 12px;
-      }
-
-      .background-row {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) 96px;
-        gap: 12px;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+        align-items: start;
+        justify-content: end;
+        margin-bottom: 10px;
       }
 
       button {
@@ -250,59 +239,43 @@
         color: rgba(24, 34, 47, 0.56);
       }
 
-      .toggle {
-        display: inline-flex;
+      .toggle-button {
+        display: flex;
         align-items: center;
-        justify-content: space-between;
-        gap: 10px;
+        justify-content: center;
         width: 100%;
-        padding: 12px 14px;
+        height: var(--tool-height);
+        padding: 0 12px;
         border: 1px solid rgba(24, 34, 47, 0.14);
-        border-radius: 14px;
+        border-radius: 16px;
         background: rgba(255, 255, 255, 0.85);
-        font: inherit;
-        color: inherit;
+        color: rgba(24, 34, 47, 0.72);
+        font: 700 0.92rem/1 "Space Grotesk", sans-serif;
+        letter-spacing: 0.01em;
+        cursor: pointer;
+        transition: background 140ms ease, color 140ms ease, box-shadow 140ms ease,
+          border-color 140ms ease;
       }
 
-      .toggle-label {
-        font-size: 0.9rem;
-        font-weight: 700;
+      .toggle-button.is-active {
+        background: linear-gradient(135deg, rgba(255, 207, 153, 0.65), rgba(237, 106, 58, 0.18));
+        color: var(--ink);
+        border-color: rgba(237, 106, 58, 0.32);
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.24);
       }
 
-      .toggle input {
+      .toggle-button input {
         position: absolute;
         opacity: 0;
         pointer-events: none;
       }
 
-      .toggle-track {
-        position: relative;
-        width: 48px;
-        height: 28px;
-        border-radius: 999px;
-        background: rgba(24, 34, 47, 0.16);
-        transition: background 140ms ease;
-      }
-
-      .toggle-track::after {
-        content: "";
-        position: absolute;
-        top: 3px;
-        left: 3px;
-        width: 22px;
-        height: 22px;
-        border-radius: 50%;
-        background: white;
-        box-shadow: 0 2px 8px rgba(24, 34, 47, 0.18);
-        transition: transform 140ms ease;
-      }
-
-      .toggle input:checked + .toggle-track {
-        background: rgba(28, 124, 84, 0.6);
-      }
-
-      .toggle input:checked + .toggle-track::after {
-        transform: translateX(20px);
+      .toggle-button span:last-child {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        line-height: 1;
       }
 
       .compact-status {
@@ -313,11 +286,15 @@
         position: relative;
         display: block;
         width: 100%;
-        height: 60px;
+        height: var(--tool-height);
         border: 1px solid rgba(24, 34, 47, 0.14);
         border-radius: 16px;
         background: rgba(255, 255, 255, 0.85);
         overflow: hidden;
+      }
+
+      .quick-tools .field select {
+        height: var(--tool-height);
       }
 
       .color-swatch input[type="color"] {
@@ -355,25 +332,15 @@
         body.debug-mode .grid {
           grid-template-columns: 1fr;
         }
-
-        .quick-tools {
-          grid-template-columns: 1fr;
-        }
-
-        .tool-cluster,
-        .background-tools {
-          grid-template-columns: 1fr 1fr;
-        }
       }
 
       @media (max-width: 560px) {
-        .tool-cluster,
-        .background-tools {
-          grid-template-columns: 1fr;
-        }
-
         .board-actions {
           flex-direction: column;
+        }
+
+        .board-actions button {
+          flex: none;
         }
       }
     </style>
@@ -408,42 +375,36 @@
 
         <section class="panel board">
           <div class="quick-tools">
-            <div class="tool-cluster">
-              <div class="field">
-                <label for="brushColor">Brush</label>
-                <label class="color-swatch" for="brushColor">
-                  <input id="brushColor" type="color" value="#18222f" />
-                </label>
-              </div>
-
-              <div class="field">
-                <label for="brushSize">Size</label>
-                <select id="brushSize">
-                  <option value="4">4 px</option>
-                  <option value="8" selected>8 px</option>
-                  <option value="12">12 px</option>
-                  <option value="18">18 px</option>
-                </select>
-              </div>
+            <div class="field">
+              <label for="brushColor">Brush</label>
+              <label class="color-swatch" for="brushColor">
+                <input id="brushColor" type="color" value="#18222f" />
+              </label>
             </div>
 
-            <div class="background-tools">
-              <div class="background-row">
-                <div class="field">
-                  <label for="backgroundColor">Background</label>
-                  <label class="color-swatch" for="backgroundColor">
-                    <input id="backgroundColor" type="color" value="#ffffff" />
-                  </label>
-                </div>
+            <div class="field">
+              <label for="brushSize">Size</label>
+              <select id="brushSize">
+                <option value="4">4 px</option>
+                <option value="8" selected>8 px</option>
+                <option value="12">12 px</option>
+                <option value="18">18 px</option>
+              </select>
+            </div>
 
-                <div class="field">
-                  <label class="toggle-label" for="transparentToggle">Transparent</label>
-                  <label class="toggle" for="transparentToggle">
-                    <input id="transparentToggle" type="checkbox" checked />
-                    <span class="toggle-track" aria-hidden="true"></span>
-                  </label>
-                </div>
-              </div>
+            <div class="field">
+              <label for="backgroundColor">Background</label>
+              <label class="color-swatch" for="backgroundColor">
+                <input id="backgroundColor" type="color" value="#ffffff" />
+              </label>
+            </div>
+
+            <div class="field">
+              <label for="transparentToggle">Transparent</label>
+              <label id="transparentToggleButton" class="toggle-button" for="transparentToggle">
+                <input id="transparentToggle" type="checkbox" checked />
+                <span id="transparentToggleText">On</span>
+              </label>
             </div>
           </div>
 
@@ -481,7 +442,9 @@
         backgroundColor: "liff-draw-send:background-color",
       };
 
-      const isDebugMode = new URLSearchParams(window.location.search).get("debug") === "1";
+      const searchParams = new URLSearchParams(window.location.search);
+      const isDebugMode = searchParams.get("debug") === "1";
+      const isMockMode = searchParams.get("mock") === "1";
 
       const state = {
         liffInitialized: false,
@@ -496,6 +459,8 @@
       const brushColorInput = document.getElementById("brushColor");
       const brushSizeInput = document.getElementById("brushSize");
       const transparentToggleInput = document.getElementById("transparentToggle");
+      const transparentToggleButton = document.getElementById("transparentToggleButton");
+      const transparentToggleText = document.getElementById("transparentToggleText");
       const backgroundColorInput = document.getElementById("backgroundColor");
       const initLiffButton = document.getElementById("initLiffButton");
       const saveConfigButton = document.getElementById("saveConfigButton");
@@ -504,6 +469,7 @@
       const configPanel = document.getElementById("configPanel");
       const canvas = document.getElementById("drawCanvas");
       const context = canvas.getContext("2d");
+      const backgroundColorField = backgroundColorInput.closest(".field");
 
       function setStatus(message, tone = "default") {
         statusElement.textContent = message;
@@ -574,6 +540,9 @@
         }
 
         backgroundColorInput.disabled = transparentToggleInput.checked;
+        backgroundColorField.classList.toggle("is-disabled", transparentToggleInput.checked);
+        transparentToggleButton.classList.toggle("is-active", transparentToggleInput.checked);
+        transparentToggleText.textContent = transparentToggleInput.checked ? "On" : "Off";
         saveDrawPreferences();
       }
 
@@ -656,6 +625,12 @@
         const { silent = false } = options;
         const liffId = liffIdInput.value.trim();
 
+        if (isMockMode) {
+          state.liffInitialized = true;
+          setStatus("Mock mode: LINE 認証なしで UI を確認できます。", "success");
+          return;
+        }
+
         if (!liffId) {
           if (!silent) {
             setStatus("LIFF ID を入力してください。", "error");
@@ -722,6 +697,11 @@
       }
 
       async function shareImage() {
+        if (isMockMode) {
+          setStatus("Mock mode では送信しません。UI 確認専用です。", "default");
+          return;
+        }
+
         if (!state.liffInitialized) {
           await initLiff();
 
