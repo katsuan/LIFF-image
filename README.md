@@ -86,6 +86,8 @@ liff-draw-send/
 - `Save Config` を押す
 - `Initialize LIFF` を押してログインと初期化を完了する
 
+通常は設定欄を隠したユーザー向け画面が表示されます。設定値や詳細ログを確認したい場合だけ、URL の末尾に `?debug=1` を付けてデバッグ表示に切り替えます。
+
 ## API
 
 ### `POST /api/upload`
@@ -109,5 +111,6 @@ Response:
 ## 注意点
 
 - Share Target Picker は LIFF 対応環境でのみ使えます
+- 通常モードでは透明背景の PNG を送信します
 - Render のローカル保存は一時的です。永続化が必要なら S3 や Cloudinary に置き換えてください
 - LINE の画像メッセージは HTTPS で外部公開された URL が必要です
