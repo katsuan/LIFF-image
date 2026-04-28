@@ -85,6 +85,7 @@ liff-draw-send/
 - Render API Base URL を入力する
 - `Save Config` を押す
 - `Initialize LIFF` を押してログインと初期化を完了する
+- 通常画面では背景を `Transparent` の ON/OFF とカラーピッカーで切り替えられる
 
 通常は設定欄を隠したユーザー向け画面が表示されます。設定値や詳細ログを確認したい場合だけ、URL の末尾に `?debug=1` を付けてデバッグ表示に切り替えます。
 
